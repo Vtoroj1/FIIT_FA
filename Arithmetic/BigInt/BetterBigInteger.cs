@@ -117,25 +117,25 @@ public sealed class BetterBigInteger : IBigInteger
         {
             uint a = digits[i];
 
-            uint aL = a & 0xFFFF;
-            uint aH = a >> 16;
-            uint bL = multiplier & 0xFFFF;
-            uint bH = multiplier >> 16;
+            uint aL = (a << (sizeof(uint) * 4)) >> (sizeof(uint) * 4);
+            uint aH = a >> (sizeof(uint) * 4);
+            uint bL = (multiplier << (sizeof(uint) * 4)) >> (sizeof(uint) * 4);
+            uint bH = multiplier >> (sizeof(uint) * 4);
 
             uint p0 = aL * bL;
             uint p1 = aL * bH;
             uint p2 = aH * bL;
             uint p3 = aH * bH;
 
-            uint low = (p0 & 0xFFFF) + (carry & 0xFFFF);
-            uint carryLow = low >> 16;
+            uint low = ((p0 << (sizeof(uint) * 4)) >> (sizeof(uint) * 4)) + ((carry << (sizeof(uint) * 4)) >> (sizeof(uint) * 4));
+            uint carryLow = low >> (sizeof(uint) * 4);
 
-            uint mid = (p0 >> 16) + (p1 & 0xFFFF) + (p2 & 0xFFFF) + (carry >> 16) + carryLow;
-            uint carryMid = mid >> 16;
+            uint mid = (p0 >> (sizeof(uint) * 4)) + ((p1 << (sizeof(uint) * 4)) >> (sizeof(uint) * 4)) + ((p2 << (sizeof(uint) * 4)) >> (sizeof(uint) * 4)) + (carry >> (sizeof(uint) * 4)) + carryLow;
+            uint carryMid = mid >> (sizeof(uint) * 4);
 
-            uint high = p3 + (p1 >> 16) + (p2 >> 16) + carryMid;
+            uint high = p3 + (p1 >> (sizeof(uint) * 4)) + (p2 >> (sizeof(uint) * 4)) + carryMid;
 
-            result[i] = (mid << 16) | (low & 0xFFFF);
+            result[i] = (mid << (sizeof(uint) * 4)) | ((low << (sizeof(uint) * 4)) >> (sizeof(uint) * 4));
             carry = high;
         }
 
@@ -347,7 +347,7 @@ public sealed class BetterBigInteger : IBigInteger
 
             if (aSign)
             {
-                if (i >= aDigits.Length) wordA = 0xFFFFFFFF;
+                if (i >= aDigits.Length) wordA = uint.MaxValue;
                 else {
                     wordA = ~wordA;
                     if (carryA) { if (wordA == uint.MaxValue) wordA = 0; else { wordA++; carryA = false; } }
@@ -356,7 +356,7 @@ public sealed class BetterBigInteger : IBigInteger
 
             if (bSign)
             {
-                if (i >= bDigits.Length) wordB = 0xFFFFFFFF;
+                if (i >= bDigits.Length) wordB = uint.MaxValue;
                 else {
                     wordB = ~wordB;
                     if (carryB) { if (wordB == uint.MaxValue) wordB = 0; else { wordB++; carryB = false; } }
@@ -397,7 +397,7 @@ public sealed class BetterBigInteger : IBigInteger
         uint[] result = new uint[digits.Length + wordShift + 1];
 
         uint carry = 0;
-        int carShift = 32 - bitShift;
+        int carShift = sizeof(uint) * 8 - bitShift;
 
         for (int i = 0; i < digits.Length; i++)
         {
@@ -467,7 +467,7 @@ public sealed class BetterBigInteger : IBigInteger
         uint[] result = new uint[digits.Length - wordShift];
 
         uint carry = 0;
-        int carBitShift = 32 - bitShift;
+        int carBitShift = sizeof(uint) * 8 - bitShift;
         
         for (int i = digits.Length - 1; i >= wordShift; i--)
         {
@@ -550,23 +550,23 @@ public sealed class BetterBigInteger : IBigInteger
             uint uA = i < a.Length ? a[i] : 0;
             uint uB = i < b.Length ? b[i] : 0;
 
-            uint aLow = uA & 0xFFFF;
-            uint bLow = uB & 0xFFFF; 
+            uint aLow = (uA << (sizeof(uint) * 4)) >> (sizeof(uint) * 4);
+            uint aHigh = uA >> (sizeof(uint) * 4);
 
-            uint aHigh = uA >> 16;
-            uint bHigh = uB >> 16;
+            uint bLow = (uB << (sizeof(uint) * 4)) >> (sizeof(uint) * 4); 
+            uint bHigh = uB >> (sizeof(uint) * 4);
 
             uint sumLow = aLow + bLow + carry;
-            uint resLow = sumLow & 0xFFFF;
+            uint resLow = (sumLow << (sizeof(uint) * 4)) >> (sizeof(uint) * 4);
 
-            uint carryLow = sumLow >> 16;
+            uint carryLow = sumLow >> (sizeof(uint) * 4);
 
             uint sumHigh = aHigh + bHigh + carryLow;
-            uint resHigh = sumHigh & 0xFFFF;
+            uint resHigh = (sumHigh << (sizeof(uint) * 4)) >> (sizeof(uint) * 4);
 
-            carry = sumHigh >> 16;
+            carry = sumHigh >> (sizeof(uint) * 4);
 
-            result[i] = resLow | (resHigh << 16);
+            result[i] = resLow | (resHigh << (sizeof(uint) * 4));
         }
 
         if (carry > 0)
@@ -588,18 +588,18 @@ public sealed class BetterBigInteger : IBigInteger
             uint uA = a[i];
             uint uB = i < b.Length ? b[i] : 0;
 
-            uint aLow = uA & 0xFFFF;
-            uint aHigh = uA >> 16;
+            uint aLow = (uA << (sizeof(uint) * 4)) >> (sizeof(uint) * 4);
+            uint aHigh = uA >> (sizeof(uint) * 4);
 
-            uint bLow = uB & 0xFFFF;
-            uint bHigh = uB >> 16;
+            uint bLow = (uB << (sizeof(uint) * 4)) >> (sizeof(uint) * 4);
+            uint bHigh = uB >> (sizeof(uint) * 4);
 
             uint bLowTotal = bLow + acc;
             uint resLow;
 
             if (aLow < bLowTotal) {
                 uint diff = bLowTotal - aLow; 
-                resLow = (~diff + 1) & 0xFFFF;
+                resLow = ((~diff + 1) << (sizeof(uint) * 4)) >> (sizeof(uint) * 4);
                 acc = 1;
             } else {
                 resLow = aLow - bLowTotal;
@@ -612,14 +612,14 @@ public sealed class BetterBigInteger : IBigInteger
             if (aHigh < bHighTotal)
             {
                 uint diff = bHighTotal - aHigh;
-                resHigh = (~diff + 1) & 0xFFFF;
+                resHigh = ((~diff + 1) << (sizeof(uint) * 4)) >> (sizeof(uint) * 4);
                 acc = 1;
             } else {
                 resHigh = aHigh - bHighTotal;
                 acc = 0;
             }
 
-            result[i] = resLow | (resHigh << 16);
+            result[i] = resLow | (resHigh << (sizeof(uint) * 4));
         }
 
         return result;
@@ -640,7 +640,7 @@ public sealed class BetterBigInteger : IBigInteger
     private static int GetBitLength(ReadOnlySpan<uint> digits)
     {
         if (digits.Length == 1 && digits[0] == 0) return 0;
-        int length = (digits.Length - 1) * 32;
+        int length = (digits.Length - 1) * sizeof(uint) * 8;
         uint last = digits[digits.Length - 1]; 
         while (last > 0)
         {
