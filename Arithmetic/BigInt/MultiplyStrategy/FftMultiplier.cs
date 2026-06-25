@@ -5,7 +5,7 @@ namespace Arithmetic.BigInt.MultiplyStrategy;
 internal class FftMultiplier : IMultiplier
 {
     private const uint MOD = 2013265921; //15 × 2^27 + 1
-    private const uint PRIMITIVE_ROOT = 31; // генерирует 1..MOD-1     
+    private const uint PRIMITIVE_ROOT = 31; // 1..MOD-1     
 
     public BetterBigInteger Multiply(BetterBigInteger a, BetterBigInteger b)
     {
@@ -91,11 +91,11 @@ internal class FftMultiplier : IMultiplier
 
         for (int len = 2; len <= n; len <<= 1)
         {
-            uint wlen = PowerMod(PRIMITIVE_ROOT, (MOD - 1) / (uint)len, MOD); // wlen^len == 1 (mod MOD) wlen = g^( (MOD-1)/len ) mod MOD
+            uint wlen = PowerMod(PRIMITIVE_ROOT, (MOD - 1) / (uint)len, MOD);
             
             if (invert)
             {
-                wlen = PowerMod(wlen, MOD - 2, MOD); // 1/wlen mod MOD
+                wlen = PowerMod(wlen, MOD - 2, MOD);
             }
             
             for (int i = 0; i < n; i += len)
